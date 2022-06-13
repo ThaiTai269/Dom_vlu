@@ -1,6 +1,7 @@
 ﻿@page "/quan-ly"
 @inject StudentServices StudentServices
 @inject RoomServices RoomServices
+@inject NavigationManager _navigationManager
 @using Microsoft.AspNetCore.Authorization
 @using vlu_dorm.Pages.Admin.TableComponent
 @using vlu_dorm.Pages.Admin.Modals
@@ -18,7 +19,7 @@ else
     <Row></Row>
 }
 <Row Style="margin: 3em;">
-    <Button Style="color: #000;  background-color: #05AC48;" Type="primary" Class="btn-admin" OnClick="@ShowModal">
+    <Button Color="@Color.Yellow4" Type="primary" Class="btn-admin" OnClick="@ShowModal">
         Quản
         lý đăng ký nội trú
     </Button>
@@ -27,7 +28,7 @@ else
         <SubscriptionManagement />
     </Modal>
 
-    <Button Style="color: #000;  background-color: #05AC48;" Type="primary" Class="btn-admin"
+    <Button Color="@Color.Green4" Type="primary" Class="btn-admin"
             OnClick="@ShowModalRoom">
         Thêm phòng
     </Button>
@@ -56,7 +57,7 @@ else
         </Form>
     </Modal>
 
-    <Button Style="color: #000;  background-color: #05AC48;" Type="primary" OnClick="@ShowModalElc"
+    <Button Color="@Color.Volcano4" Type="primary" OnClick="@ShowModalElc"
             Class="btn-admin">
         Quản lý điện, nước
     </Button>
@@ -67,7 +68,7 @@ else
             <Row>
                 <Text>
                     Điện nước Tháng: <b>
-                            @DateTime.Today.Month
+                        @DateTime.Today.Month
                     </b>
 
                 </Text>
@@ -85,8 +86,8 @@ else
                 </Select>
                 </Col>
 
-                    @if (value != null)
-                    {
+                @if (value != null)
+                {
                     <Form Model="room" OnFinishFailed="OnFinishFailed" OnFinish="OnFinish">
 
                         <FormItem>
@@ -100,7 +101,7 @@ else
                         </FormItem>
 
                     </Form>
-                    }
+                }
             </Row>
             </Col>
         </Row>
@@ -123,13 +124,16 @@ else
     <Card Title=@("Thống kê tiền nước tháng: "+month) Style="width: 450px">
 
         <Body>
-                @if (bills != null)
-                {
+            @if (bills != null)
+            {
                 <p>Số điện: <strong>@(bills.Sum(c=>c?.BillNavgation?.ElectricNumber))</strong></p>
-                <p>Số nước: <strong> @(bills.Sum(c=>c?.BillNavgation?.ElectricNumber))</strong></p>
+                <p>Số nước: <strong> @(bills.Sum(c=>c?.BillNavgation?.WaterNumber))</strong></p>
+                <p>Tổng sinh viên đã duyệt và xác nhận: <strong>@(data.Where(c => c.IsConfirm == true && c.IsActive == true).Count())</strong> </p>
+                <p>Số sinh viên chưa duyệt: <strong>@(data.Where(c => c.IsConfirm != true).Count())</strong>(Sinh viên chưa được duyệt)</p>
+                <p>Số sinh viên chưa xác nhận: <strong>@(data.Where(c => c.IsActive == false).Count())</strong>(Sinh viên chưa được tạo mail)</p>
                 <p>Tổng tiền (Điện + Nước):<strong>@Total()</strong></p>
                 <p>Tổng tiền (Điện + Nước + Tiền phòng + Tiền xe): <strong>@TotalAll()</strong></p>
-                }
+            }
         </Body>
     </Card>
     </Col>
@@ -138,6 +142,9 @@ else
     </Col>
     <Col Offset="1">
     <TableRoomView Rooms="rooms" />
+    </Col>
+    <Col Offset="1">
+    <TableBill />
     </Col>
 </Row>
 
@@ -151,7 +158,6 @@ else
     private bool visible = false;
     private bool visibleRoom = false;
     private bool visibleElectric = false;
-    private bool isNew = true;
     private string value;
     private bool isSucess = false;
     private string notice;
@@ -174,7 +180,7 @@ else
         visible = true;
     }
 
-    private void ShowModalRoom() { visibleRoom = true; isNew = true; }
+    private void ShowModalRoom() { visibleRoom = true; }
     private void ShowModalElc() => visibleElectric = true;
 
 
@@ -236,6 +242,7 @@ else
             type = "success";
             room.BillNavgation.BillMonth = DateTime.Today;
             await RoomServices.UpdateRoomAsync(room);
+            _navigationManager.NavigateTo("quan-ly", true);
         }
         else
         {
